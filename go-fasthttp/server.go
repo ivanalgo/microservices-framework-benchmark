@@ -9,6 +9,7 @@ import (
     "log"
     "os/exec"
     "os"
+    "golang.org/x/sys/unix"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
     prefork    = flag.Bool("prefork", false, "use prefork")
     child      = flag.Bool("child", false, "is child proc")
     cpu        = flag.Int("cpus", runtime.NumCPU(), "cpu numbers")
+    memAlloc   = flag.Bool("memAlloc", false, "allocated memory in each request")
 )
 
 func main() {
@@ -47,6 +49,20 @@ func mainHandler(ctx *fasthttp.RequestCtx) {
 func plaintextHandler(ctx *fasthttp.RequestCtx) {
     ctx.SetContentType("text/plain")
     ctx.WriteString("Hello World!")
+
+    if *memAlloc {
+        // Add memory allocation here to simulate the realworld tasks
+        size := 4096
+        data, err := unix.Mmap(-1, 0, size, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_ANON|unix.MAP_PRIVATE)
+        if err != nil {
+            return
+        }
+
+        defer unix.Munmap(data)
+
+        // touch memory to cause memory allocation in OS
+        data[0] = 0xff
+    }
 }
 
 func getListener() net.Listener {
