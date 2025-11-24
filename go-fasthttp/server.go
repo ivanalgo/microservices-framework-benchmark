@@ -15,6 +15,7 @@ var (
     listenAddr = flag.String("listenAddr", ":8080", "Address to listen to")
     prefork    = flag.Bool("prefork", false, "use prefork")
     child      = flag.Bool("child", false, "is child proc")
+    cpu        = flag.Int("cpus", runtime.NumCPU(), "cpu numbers")
 )
 
 func main() {
@@ -50,7 +51,7 @@ func plaintextHandler(ctx *fasthttp.RequestCtx) {
 
 func getListener() net.Listener {
     if !*prefork {
-        runtime.GOMAXPROCS(runtime.NumCPU())
+        runtime.GOMAXPROCS(*cpu)
         ln, err := net.Listen("tcp4", *listenAddr)
         if err != nil {
             log.Fatal(err)
@@ -59,7 +60,7 @@ func getListener() net.Listener {
     }
 
     if !*child {
-        children := make([]*exec.Cmd, runtime.NumCPU())
+        children := make([]*exec.Cmd, *cpu)
         for i := range children {
             children[i] = exec.Command(os.Args[0], "-prefork", "-child")
             children[i].Stdout = os.Stdout
