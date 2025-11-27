@@ -10,6 +10,7 @@ import (
     "os/exec"
     "os"
     "golang.org/x/sys/unix"
+    "strings"
 )
 
 var (
@@ -18,6 +19,9 @@ var (
     child      = flag.Bool("child", false, "is child proc")
     cpu        = flag.Int("cpus", runtime.NumCPU(), "cpu numbers")
     memAlloc   = flag.Bool("memAlloc", false, "allocated memory in each request")
+    bigPkt     = flag.Bool("bigPkt", false, "reponse with 16k packet size")
+
+    response16K = strings.Repeat("A", 16*1024)
 )
 
 func main() {
@@ -48,7 +52,11 @@ func mainHandler(ctx *fasthttp.RequestCtx) {
 
 func plaintextHandler(ctx *fasthttp.RequestCtx) {
     ctx.SetContentType("text/plain")
-    ctx.WriteString("Hello World!")
+    if *bigPkt {
+        ctx.WriteString(response16K);
+    } else {
+        ctx.WriteString("Hello World!")
+    }
 
     if *memAlloc {
         // Add memory allocation here to simulate the realworld tasks
